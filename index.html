@@ -39,9 +39,6 @@
       <button class="icon-btn back" id="backBtn" hidden aria-label="Back">
         <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
       </button>
-      <button class="icon-btn" id="roomsBtn" aria-label="Chat rooms">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      </button>
       <div class="brand"><span class="brand-mark">T</span>alkTime</div>
       <div class="me-tag" id="meTag"></div>
     </header>
@@ -123,6 +120,7 @@
     <!-- CONVERSATIONS (inbox) -->
     <main id="conversationsView" class="view" hidden>
       <h2 class="view-title">Messages</h2>
+      <button id="roomsBtn" class="nearby-cta">💬 Chat rooms</button>
       <button id="nearbyBtn" class="nearby-cta">📍 Find people near you</button>
       <div id="convList" class="conv-list"></div>
       <div id="convEmpty" class="empty" hidden>No messages yet. Open a post and tap “Message”, or find people near you.</div>
