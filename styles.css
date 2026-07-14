@@ -384,9 +384,10 @@ svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width:
   background: var(--chrome); border-top: 1px solid var(--line);
   padding-bottom: var(--safe-bottom);
 }
-.nav-btn { border: none; background: none; color: #b0b6bd; cursor: pointer; padding: 8px;
+.nav-btn { position: relative; border: none; background: none; color: #b0b6bd; cursor: pointer; padding: 8px;
   display: grid; place-items: center; }
 .nav-btn.is-active { color: var(--accent); }
+.nav-badge { top: 1px; right: 3px; }
 .nav-btn.create {
   color: #fff; width: 52px; height: 52px; border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
