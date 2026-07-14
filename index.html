@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e1013" />
+  <title>TalkTime</title>
+  <!-- installable web app (Add to Home Screen on iPhone / Android) -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TalkTime" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Legal disclaimer (shown once, before first use) -->
+    <div id="disclaimerView" class="disclaimer-overlay" hidden>
+      <div class="disclaimer-box">
+        <div class="disclaimer-title">Please read before you continue</div>
+        <div class="disclaimer-text">
+          <p>TalkTime is provided <strong>“as is”</strong>, with no warranties of any kind.</p>
+          <p><strong>You use this app entirely at your own risk and assume sole responsibility for how you use it</strong> — including anything you post, send, or share, and any interactions with other users.</p>
+          <p>Follow all applicable laws. Do not post or send anything illegal, and do not harass, threaten, impersonate, or harm others.</p>
+          <p>You are anonymous to other users. However, for safety and to comply with the law, this service keeps records — including a device identifier, IP address, approximate location, and timestamps — tied to what you post and send. If you post or send illegal content, these records may be disclosed to law enforcement.</p>
+          <p>TalkTime is a place to express yourself and be heard. If you’re going through a hard time or thinking about hurting yourself, please reach out to someone you trust or a local support/crisis line — you’re not alone.</p>
+          <p>To the fullest extent permitted by law, the creators and anyone involved in making this app are <strong>not liable</strong> for any loss, damage, or harm arising from your use of the app or from other users’ conduct.</p>
+          <p>By tapping <strong>I Agree</strong>, you accept these terms. If you do not agree, close the app.</p>
+        </div>
+        <button id="agreeBtn" class="post-btn">I Agree</button>
+      </div>
+    </div>
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <button class="icon-btn back" id="backBtn" hidden aria-label="Back">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <button class="icon-btn" id="inboxBtn" aria-label="Messages">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 6l8 6 8-6"/></svg>
+        <span class="badge" id="inboxBadge" hidden>0</span>
+      </button>
+      <button class="icon-btn" id="roomsBtn" aria-label="Chat rooms">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </button>
+      <div class="brand"><span class="brand-mark">T</span>alkTime</div>
+      <div class="me-tag" id="meTag"></div>
+    </header>
+
+    <!-- reconnect banner (shown when the server can't be reached) -->
+    <div id="reconnecting" class="reconnecting" hidden><span class="ptr-spin"></span> Reconnecting…</div>
+
+    <!-- HOME / FEED -->
+    <main id="feedView" class="view">
+      <div class="feed-tabs">
+        <button class="ftab is-active" data-tab="latest">Latest</button>
+        <button class="ftab" data-tab="local">Local</button>
+        <button class="ftab" data-tab="tag">Tag</button>
+      </div>
+      <input id="tagSearch" class="tag-search" type="text" placeholder="Search tags…" autocomplete="off" hidden />
+      <div id="tagBar" class="tag-bar" hidden></div>
+      <div id="feedNote" class="feed-note" hidden></div>
+      <div id="ptr" class="ptr"><div class="ptr-spin"></div></div>
+      <div id="feed" class="feed"></div>
+      <div id="feedMore" class="feed-more" hidden><div class="ptr-spin"></div></div>
+      <div id="feedEmpty" class="empty" hidden>No posts yet. Tap ＋ to share one.</div>
+    </main>
+
+    <!-- SEARCH -->
+    <main id="searchView" class="view" hidden>
+      <div class="search-bar">
+        <svg class="search-ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="searchInput" type="text" placeholder="Search posts…" autocomplete="off" />
+      </div>
+      <div id="searchResults" class="feed"></div>
+      <div id="searchHint" class="empty">Search everyone's posts.</div>
+    </main>
+
+    <!-- ACTIVITY -->
+    <main id="activityView" class="view" hidden>
+      <h2 class="view-title">Liked posts</h2>
+      <div id="activityFeed" class="feed"></div>
+      <div id="activityEmpty" class="empty" hidden>Posts you like show up here.</div>
+    </main>
+
+    <!-- ME -->
+    <main id="meView" class="view" hidden>
+      <div class="profile">
+        <div class="avatar" id="meAvatar">?</div>
+        <div class="me-name" id="meName">Anonymous</div>
+        <div class="me-sub">Your posts are still anonymous to everyone else.</div>
+      </div>
+      <div class="settings">
+        <label class="set-label">Username</label>
+        <div class="set-row">
+          <input id="usernameInput" type="text" maxlength="20" autocomplete="off" placeholder="Your username" />
+          <button id="saveUsernameBtn" class="send-btn">Save</button>
+        </div>
+        <div class="set-hint">3–20 letters, numbers, or _. Your public name on posts and chats (still not your real identity).</div>
+      </div>
+      <div class="settings">
+        <label class="set-label">Connection</label>
+        <div class="set-row">
+          <input id="serverUrl" type="url" placeholder="https://…" autocomplete="off" />
+          <button id="saveServer" class="send-btn">Save</button>
+        </div>
+        <div class="set-hint">Update this only if the app can’t connect. Saving reloads the app.</div>
+      </div>
+      <div class="settings">
+        <label class="set-label">App lock (PIN)</label>
+        <div id="pinStatus" class="set-hint">Off — the app opens without a PIN.</div>
+        <div class="set-row">
+          <input id="pinInput" type="password" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="PIN (4+ digits)" />
+          <button id="setPinBtn" class="send-btn">Set</button>
+        </div>
+        <button id="removePinBtn" class="ghost-btn" hidden style="margin-top:8px;width:100%;">Remove PIN</button>
+        <div class="set-hint">Locks the app on this device. It protects against someone picking up your phone — it doesn't encrypt your data or control who can connect.</div>
+      </div>
+      <div id="meFeed" class="feed"></div>
+      <div id="meEmpty" class="empty" hidden>You haven't posted yet.</div>
+    </main>
+
+    <!-- CONVERSATIONS (inbox) -->
+    <main id="conversationsView" class="view" hidden>
+      <h2 class="view-title">Messages</h2>
+      <button id="nearbyBtn" class="nearby-cta">📍 Find people near you</button>
+      <div id="convList" class="conv-list"></div>
+      <div id="convEmpty" class="empty" hidden>No messages yet. Open a post and tap “Message”, or find people near you.</div>
+    </main>
+
+    <!-- NEARBY people -->
+    <main id="nearbyView" class="view" hidden>
+      <h2 class="view-title">People near you</h2>
+      <div id="nearbyNote" class="feed-note"></div>
+      <div id="nearbyList" class="conv-list"></div>
+      <div id="nearbyEmpty" class="empty" hidden>No one nearby yet. People using TalkTime near you will show up here.</div>
+    </main>
+
+    <!-- ROOMS list -->
+    <main id="roomsView" class="view" hidden>
+      <h2 class="view-title">Chat rooms</h2>
+      <div class="create-room">
+        <input id="newRoomName" type="text" maxlength="40" placeholder="Create a room…" autocomplete="off" />
+        <button id="createRoomBtn" class="send-btn">Create</button>
+      </div>
+      <div id="roomsList" class="conv-list"></div>
+    </main>
+
+    <!-- ROOM (themed post feed) -->
+    <main id="roomView" class="view" hidden>
+      <div id="roomCover" class="room-cover">
+        <button id="changeCoverBtn" class="cover-edit" hidden aria-label="Change cover photo">📷 Cover</button>
+        <div class="room-cover-title" id="roomHead"></div>
+      </div>
+      <input type="file" id="coverFile" accept="image/*" hidden />
+      <div id="roomDesc" class="room-desc"></div>
+      <div class="room-bar">
+        <span id="roomMembers" class="room-members"></span>
+        <button id="roomPostBtn" class="room-post-btn">＋ Post</button>
+      </div>
+      <div id="roomFeed" class="feed"></div>
+      <div id="roomEmpty" class="empty" hidden>No posts yet — be the first to post!</div>
+    </main>
+
+    <!-- CHAT thread -->
+    <main id="chatView" class="view" hidden>
+      <div class="chat-head">
+        <span id="chatHead"></span>
+        <div class="chat-actions">
+          <button id="cameraBtn" class="chat-icon-btn" aria-label="Turn images on or off">
+            <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h6l2 3h3a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          </button>
+          <button id="chatMenuBtn" class="chat-menu-btn" aria-label="Options">⋮</button>
+        </div>
+      </div>
+      <div id="chatMenu" class="chat-menu" hidden>
+        <button data-act="block" id="blockAct">Block</button>
+        <button data-act="report">Report</button>
+        <button data-act="delete">Delete chat</button>
+      </div>
+      <div id="chatThread" class="chat-thread"></div>
+      <form id="chatForm" class="reply-form">
+        <button type="button" id="attachBtn" class="attach-btn" aria-label="Attach">＋</button>
+        <input id="chatInput" type="text" maxlength="1000" placeholder="Message…" autocomplete="off" />
+        <button type="submit" class="send-btn">Send</button>
+      </form>
+      <input type="file" id="chatFile" accept="image/*,video/*" hidden />
+    </main>
+
+    <!-- DETAIL (post) -->
+    <main id="detailView" class="view" hidden>
+      <div class="post-head">
+        <div class="post-who">
+          <div class="post-author" id="detailAuthor"></div>
+          <div class="post-loc" id="detailLoc"></div>
+        </div>
+        <div class="post-time" id="detailTime"></div>
+      </div>
+      <div id="detailCard"></div>
+      <div class="post-actions" id="postActions">
+        <button class="pa like" id="paLike"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg><span id="paLikeN">0</span></button>
+        <button class="pa" id="paReply"><svg viewBox="0 0 24 24"><path d="M9 17l-5-5 5-5"/><path d="M4 12h11a5 5 0 015 5v1"/></svg> Reply</button>
+        <button class="pa chat" id="paChat"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg> Chat</button>
+        <button class="pa delete" id="paDelete" hidden><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Delete</button>
+      </div>
+      <div id="replyList" class="reply-list"></div>
+      <form id="replyForm" class="reply-form">
+        <input id="replyInput" type="text" maxlength="280" placeholder="Reply anonymously…" autocomplete="off" />
+        <button type="submit" class="send-btn">Send</button>
+      </form>
+    </main>
+
+    <!-- COMPOSE (full-screen overlay) -->
+    <div id="composeView" class="overlay" hidden>
+      <div class="compose-top">
+        <button id="composeCancel" class="link-btn">Cancel</button>
+        <span class="compose-title">New Post</span>
+        <button id="postBtn" class="post-btn">Post</button>
+      </div>
+      <div class="compose-stage" id="composeStage">
+        <textarea id="composeText" maxlength="280" placeholder="Type your secret…"></textarea>
+      </div>
+      <input id="composeTags" class="compose-tags" type="text" maxlength="120" placeholder="Add tags: life, advice… (optional)" autocomplete="off" />
+      <div class="bg-tools">
+        <button id="uploadBtn" class="tool-btn">🖼️ Image / GIF</button>
+        <button id="shufflePhoto" class="tool-btn">🎲 Surprise</button>
+      </div>
+      <div class="bg-picker" id="bgPicker"></div>
+      <input type="file" id="fileInput" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+    </div>
+
+    <!-- Lock screen (shown only if a PIN is set) -->
+    <div id="lockView" class="lock-overlay" hidden>
+      <div class="lock-box">
+        <div class="lock-logo"><span class="brand-mark">T</span>alkTime</div>
+        <div class="lock-title">Enter your PIN</div>
+        <input id="lockInput" type="password" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="••••" />
+        <button id="unlockBtn" class="post-btn">Unlock</button>
+        <div id="lockError" class="lock-error" hidden>Wrong PIN — try again</div>
+      </div>
+    </div>
+
+    <!-- Image viewer (tap a photo to enlarge) -->
+    <div id="lightbox" class="lightbox" hidden><img id="lightboxImg" alt="photo" /></div>
+
+    <!-- Bottom navigation -->
+    <nav class="bottomnav" id="bottomnav">
+      <button class="nav-btn is-active" data-nav="feed" aria-label="Home">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      </button>
+      <button class="nav-btn" data-nav="search" aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </button>
+      <button class="nav-btn create" data-nav="compose" aria-label="New post">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="nav-btn" data-nav="activity" aria-label="Activity">
+        <svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>
+      </button>
+      <button class="nav-btn" data-nav="me" aria-label="Me">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </button>
+    </nav>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
