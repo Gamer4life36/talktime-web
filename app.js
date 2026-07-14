@@ -297,6 +297,8 @@ async function loadFeed() {
       $('#feedNote').textContent = 'Showing all located posts. Enable location (needs HTTPS) to sort by distance.';
     }
     renderFeedList(await api(url));
+  } else if (tab === 'popular') {
+    renderFeedList(await api('/whispers?sort=popular'));
   } else if (tab === 'tag') {
     const q = $('#tagSearch').value.trim();
     const tags = await loadTagBar(q);
@@ -370,20 +372,74 @@ $('#tagSearch').addEventListener('input', () => {
   tagSearchTimer = setTimeout(() => { currentTag = null; if (currentTab === 'tag') loadFeed(); }, 250);
 });
 
-// ---- search --------------------------------------------------------------- //
+// ---- search: posts, people, rooms, tags ----------------------------------- //
 let allForSearch = [];
+let roomsForSearch = [];
+let searchSeq = 0;               // guards against out-of-order async results
 async function loadSearch() {
-  allForSearch = await api('/whispers?sort=latest');
+  [allForSearch, roomsForSearch] = await Promise.all([
+    api('/whispers?sort=latest').catch(() => []),
+    api('/rooms').catch(() => []),
+  ]);
   renderSearch($('#searchInput').value);
 }
-function renderSearch(q) {
-  q = (q || '').trim().toLowerCase();
+function searchSection(title, inner) {
+  return `<div class="search-sec"><div class="search-sec-h">${title}</div>${inner}</div>`;
+}
+function roomRowHtml(r) {
+  return `<div class="conv" data-room="${r.id}" data-name="${esc(r.name)}" data-nsfw="${r.nsfw ? 1 : 0}">
+      <div class="room-icon ${r.nsfw ? 'nsfw' : ''}"${r.cover ? ` data-img="${esc(r.cover)}"` : ''}>${r.cover ? '' : esc((r.name || '?')[0])}</div>
+      <div class="conv-body">
+        <div class="conv-name">${esc(r.name)}${r.nsfw ? '<span class="nsfw-tag">18+</span>' : ''}</div>
+        <div class="room-sub">${r.members} member${r.members === 1 ? '' : 's'} · ${r.posts} post${r.posts === 1 ? '' : 's'}</div>
+      </div>
+    </div>`;
+}
+function userRowHtml(u) {
+  return `<div class="conv" data-uid="${u.userId}" data-nick="${esc(u.nickname)}">
+      <div class="conv-avatar">${esc((u.nickname || '?')[0])}</div>
+      <div class="conv-body"><div class="conv-name">${esc(u.nickname)}</div>
+        <div class="room-sub">Tap to message</div></div>
+    </div>`;
+}
+async function renderSearch(q) {
+  q = (q || '').trim();
   const box = $('#searchResults');
   if (!q) { box.innerHTML = ''; $('#searchHint').hidden = false; return; }
   $('#searchHint').hidden = true;
-  const hits = allForSearch.filter((w) => w.text.toLowerCase().includes(q));
-  box.innerHTML = hits.length ? hits.map(cardHtml).join('') : '<div class="empty">No matches.</div>';
+  const ql = q.toLowerCase();
+  const seq = ++searchSeq;
+
+  // rooms + posts filter locally; people + tags come from the server
+  const rooms = roomsForSearch.filter((r) =>
+    r.name.toLowerCase().includes(ql) || (r.description || '').toLowerCase().includes(ql)).slice(0, 12);
+  const posts = allForSearch.filter((w) => w.text.toLowerCase().includes(ql)).slice(0, 40);
+  let users = [], tags = [];
+  try {
+    [users, tags] = await Promise.all([
+      api('/users?q=' + encodeURIComponent(q)),
+      api('/tags?q=' + encodeURIComponent(q)),
+    ]);
+  } catch (e) { /* keep local-only results */ }
+  if (seq !== searchSeq) return;   // a newer keystroke already rendered
+
+  let html = '';
+  if (rooms.length) html += searchSection('Rooms', rooms.map(roomRowHtml).join(''));
+  if (users.length) html += searchSection('People', users.map(userRowHtml).join(''));
+  if (tags.length) html += searchSection('Tags',
+    `<div class="tag-bar">${tags.map((t) => `<button class="tag-chip" data-tag="${esc(t.tag)}">#${esc(t.tag)}<span class="cnt">${t.n}</span></button>`).join('')}</div>`);
+  if (posts.length) html += searchSection('Posts', posts.map(cardHtml).join(''));
+  box.innerHTML = html || '<div class="empty">No matches.</div>';
   hydrateImages(box);
+}
+// tap a tag in search results → open that tag's feed
+function openTagFromSearch(tag) {
+  currentTab = 'tag';
+  currentTag = tag;
+  $('#tagSearch').value = tag;
+  document.querySelectorAll('.ftab').forEach((x) => x.classList.toggle('is-active', x.dataset.tab === 'tag'));
+  showView('feed');
+  loadFeed();
 }
 
 // ---- activity / me -------------------------------------------------------- //
@@ -821,6 +877,12 @@ $('#tagBar').addEventListener('click', async (e) => {
 });
 
 $('#searchInput').addEventListener('input', (e) => renderSearch(e.target.value));
+
+// tap a tag chip in the search results → jump to that tag's feed
+$('#searchResults').addEventListener('click', (e) => {
+  const chip = e.target.closest('.tag-chip');
+  if (chip) openTagFromSearch(chip.dataset.tag);
+});
 
 // compose actions
 $('#composeCancel').addEventListener('click', closeCompose);
