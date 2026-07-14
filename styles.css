@@ -235,6 +235,13 @@ svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width:
 }
 .search-bar .search-ico { width: 18px; height: 18px; color: var(--muted); }
 .search-bar input { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; color: var(--text); }
+/* grouped search results: Rooms / People / Tags / Posts */
+.search-sec { margin-bottom: 6px; }
+.search-sec-h {
+  font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); padding: 12px 14px 6px;
+}
+.search-sec .tag-bar { flex-wrap: wrap; overflow: visible; }
 
 /* ---- profile (Me) ---- */
 .profile { text-align: center; padding: 22px 16px 8px; }
