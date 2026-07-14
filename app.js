@@ -198,7 +198,6 @@ function showView(name) {
   if (currentView === 'feed' && name !== 'feed') feedScrollY = window.scrollY;   // save home scroll on leave
   for (const [k, el] of Object.entries(views)) el.hidden = k !== name;
   $('#backBtn').hidden = !SUBVIEWS.has(name);
-  $('#inboxBtn').hidden = SUBVIEWS.has(name);
   document.querySelectorAll('.nav-btn[data-nav]').forEach((b) =>
     b.classList.toggle('is-active', b.dataset.nav === name));
   // one history entry per sub-view level → the phone's Back button walks back
@@ -599,7 +598,7 @@ async function openNearby() {
 async function refreshUnread() {
   try {
     const { count } = await api('/unread');
-    for (const id of ['#inboxBadge', '#navInboxBadge']) {
+    for (const id of ['#navInboxBadge']) {
       const b = $(id); if (!b) continue;
       if (count > 0) { b.hidden = false; b.textContent = count > 99 ? '99+' : count; }
       else b.hidden = true;
@@ -727,8 +726,7 @@ $('#paDelete').addEventListener('click', async () => {
   } catch (err) { alert('Could not delete: ' + err.message); }
 });
 
-// inbox + rooms + nearby + back
-$('#inboxBtn').addEventListener('click', openConversations);
+// rooms + nearby + back (Messages now lives in the bottom nav)
 $('#roomsBtn').addEventListener('click', openRooms);
 $('#nearbyBtn').addEventListener('click', openNearby);
 
