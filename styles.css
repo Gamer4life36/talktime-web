@@ -172,8 +172,9 @@ svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width:
   border-bottom: 1px solid var(--line);
 }
 .ftab {
+  flex: 1 1 0; min-width: 0; text-align: center;
   border: none; cursor: pointer; font-size: 14px; font-weight: 700;
-  color: var(--muted); background: transparent; padding: 8px 14px; border-radius: 999px;
+  color: var(--muted); background: transparent; padding: 8px 10px; border-radius: 999px;
 }
 .ftab.is-active { color: var(--accent); background: rgba(41,182,246,.12); }
 
