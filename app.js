@@ -191,14 +191,34 @@ const views = {
 };
 const SUBVIEWS = new Set(['detail', 'conversations', 'chat', 'nearby', 'rooms', 'room']);
 let backTo = 'feed';
+let currentView = 'feed';
+let feedScrollY = 0;        // remembers your place on the home feed
+let popping = false;        // true while handling a hardware/browser back
 function showView(name) {
+  if (currentView === 'feed' && name !== 'feed') feedScrollY = window.scrollY;   // save home scroll on leave
   for (const [k, el] of Object.entries(views)) el.hidden = k !== name;
   $('#backBtn').hidden = !SUBVIEWS.has(name);
   $('#inboxBtn').hidden = SUBVIEWS.has(name);
   document.querySelectorAll('.nav-btn[data-nav]').forEach((b) =>
     b.classList.toggle('is-active', b.dataset.nav === name));
-  window.scrollTo(0, 0);
+  // one history entry per sub-view level → the phone's Back button walks back
+  // through the app instead of exiting (skipped while we're handling a Back)
+  if (!popping && SUBVIEWS.has(name)) history.pushState({ view: name }, '');
+  currentView = name;
+  if (name === 'feed') window.scrollTo(0, feedScrollY);   // restore home scroll
+  else window.scrollTo(0, 0);
 }
+// go back one level, keeping the home feed exactly where the user left it
+function goBack() {
+  if (backTo === 'conversations') { openConversations(); return; }
+  if (backTo === 'nearby') { openNearby(); return; }
+  if (backTo === 'rooms') { openRooms(); return; }
+  showView('feed');   // no reload — preserves scroll position + already-loaded posts
+}
+// the phone's Back button / browser back / back gesture all route through here
+window.addEventListener('popstate', () => {
+  if (SUBVIEWS.has(currentView)) { popping = true; goBack(); popping = false; }
+});
 
 // ---- feed (Latest / Local / Tag) ------------------------------------------ //
 let currentTab = 'latest';
@@ -766,12 +786,8 @@ document.querySelectorAll('.nav-btn[data-nav]').forEach((b) => b.addEventListene
   else if (nav === 'me') loadMe();
 }));
 
-$('#backBtn').addEventListener('click', () => {
-  if (backTo === 'conversations') { openConversations(); return; }
-  if (backTo === 'nearby') { openNearby(); return; }
-  if (backTo === 'rooms') { openRooms(); return; }
-  showView('feed'); loadFeed();
-});
+// the top-left back arrow uses the same history path as the phone's Back button
+$('#backBtn').addEventListener('click', () => { history.back(); });
 
 document.querySelectorAll('.ftab').forEach((t) => t.addEventListener('click', () => {
   document.querySelectorAll('.ftab').forEach((x) => x.classList.remove('is-active'));
