@@ -56,8 +56,9 @@
     <!-- HOME / FEED -->
     <main id="feedView" class="view">
       <div class="feed-tabs">
-        <button class="ftab is-active" data-tab="latest">Latest</button>
+        <button class="ftab is-active" data-tab="latest">Recent</button>
         <button class="ftab" data-tab="local">Local</button>
+        <button class="ftab" data-tab="popular">Popular</button>
         <button class="ftab" data-tab="tag">Tag</button>
       </div>
       <input id="tagSearch" class="tag-search" type="text" placeholder="Search tags…" autocomplete="off" hidden />
@@ -73,10 +74,10 @@
     <main id="searchView" class="view" hidden>
       <div class="search-bar">
         <svg class="search-ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input id="searchInput" type="text" placeholder="Search posts…" autocomplete="off" />
+        <input id="searchInput" type="text" placeholder="Search posts, people, rooms, tags…" autocomplete="off" />
       </div>
       <div id="searchResults" class="feed"></div>
-      <div id="searchHint" class="empty">Search everyone's posts.</div>
+      <div id="searchHint" class="empty">Search posts, people, rooms, and tags.</div>
     </main>
 
     <!-- ACTIVITY -->
