@@ -210,15 +210,27 @@ function showView(name) {
 }
 // go back one level, keeping the home feed exactly where the user left it
 function goBack() {
+  if (currentView === 'search' || currentView === 'activity' || currentView === 'me') {
+    showView('feed'); return;                         // a main tab → home
+  }
   if (backTo === 'conversations') { openConversations(); return; }
   if (backTo === 'nearby') { openNearby(); return; }
   if (backTo === 'rooms') { openRooms(); return; }
-  showView('feed');   // no reload — preserves scroll position + already-loaded posts
+  showView('feed');   // subview → home; no reload, preserves scroll + loaded posts
 }
-// the phone's Back button / browser back / back gesture all route through here
+// browser/PWA back button + gesture
 window.addEventListener('popstate', () => {
-  if (SUBVIEWS.has(currentView)) { popping = true; goBack(); popping = false; }
+  if (currentView !== 'feed') { popping = true; goBack(); popping = false; }
 });
+// Android hardware Back button (Capacitor): go to the previous screen instead of
+// closing the app; only exit when already on the home feed.
+const CapApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+if (CapApp) {
+  CapApp.addListener('backButton', () => {
+    if (currentView === 'feed') CapApp.exitApp();
+    else { popping = true; goBack(); popping = false; }
+  });
+}
 
 // ---- feed (Latest / Local / Tag) ------------------------------------------ //
 let currentTab = 'latest';
@@ -531,9 +543,11 @@ async function openNearby() {
 async function refreshUnread() {
   try {
     const { count } = await api('/unread');
-    const b = $('#inboxBadge');
-    if (count > 0) { b.hidden = false; b.textContent = count > 99 ? '99+' : count; }
-    else b.hidden = true;
+    for (const id of ['#inboxBadge', '#navInboxBadge']) {
+      const b = $(id); if (!b) continue;
+      if (count > 0) { b.hidden = false; b.textContent = count > 99 ? '99+' : count; }
+      else b.hidden = true;
+    }
   } catch (e) { /* ignore */ }
 }
 
@@ -779,6 +793,7 @@ $('#chatMenu').addEventListener('click', async (e) => {
 document.querySelectorAll('.nav-btn[data-nav]').forEach((b) => b.addEventListener('click', () => {
   const nav = b.dataset.nav;
   if (nav === 'compose') { openCompose(); return; }
+  if (nav === 'conversations') { openConversations(); return; }   // Messages
   showView(nav);
   if (nav === 'feed') loadFeed();
   else if (nav === 'search') loadSearch();
